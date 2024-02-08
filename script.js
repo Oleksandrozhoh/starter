@@ -14,9 +14,6 @@ const inputElevation = document.querySelector('.form__input--elevation');
 // get users geo location
 navigator.geolocation.getCurrentPosition(
   function (position) {
-    console.log(
-      `Latitude: ${position.coords.latitude}, Longitude: ${position.coords.longitude}`
-    );
     const { latitude } = position.coords;
     const { longitude } = position.coords;
 
@@ -33,10 +30,26 @@ navigator.geolocation.getCurrentPosition(
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(map);
 
-    L.marker(coords)
-      .addTo(map)
-      .bindPopup('A pretty CSS popup.<br> Easily customizable.')
-      .openPopup();
+    // custom letleaf event listener
+    map.on('click', function (mapEvent) {
+      form.classList.remove('hidden');
+      inputDistance.focus();
+      // add a popup on to the map
+      const { lat, lng } = mapEvent.latlng;
+      L.marker([lat, lng])
+        .addTo(map)
+        .bindPopup(
+          L.popup({
+            maxWidth: 250,
+            minWidth: 100,
+            autoClose: false,
+            closeOnClick: false,
+            className: 'running-popup',
+          })
+        )
+        .setPopupContent('Workout')
+        .openPopup();
+    });
   },
   function () {
     alert('Could not get your location');
