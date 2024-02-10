@@ -3,11 +3,16 @@
 class Workout {
   date = new Date();
   id = Math.trunc(Math.random() * 100000000000).toString();
+  click = 0;
 
   constructor(coords, distance, duration) {
     this.coords = coords;
     this.distance = distance;
     this.duration = duration;
+  }
+
+  _click() {
+    this.click++;
   }
 }
 
@@ -56,10 +61,8 @@ class Cycling extends Workout {
   }
 }
 
-const run = new Running([39, -12], 5.2, 23, 178);
-const cycling = new Running([39, -12], 27, 40, 523);
-console.log(run);
-console.log(cycling);
+// const run = new Running([39, -12], 5.2, 23, 178);
+// const cycling = new Running([39, -12], 27, 40, 523);
 
 /////////////////////////////////////////////////
 // APLICATION ARCHITECTURE
@@ -79,7 +82,11 @@ class App {
   #mapEvent;
 
   constructor() {
+    // get users possition
     this._getPosition();
+    // get data from local storage
+    this._getLocalStorage();
+    //Attach event handlers
     form.addEventListener('submit', this._newWorkout.bind(this));
     inputType.addEventListener('change', this._toggleElevationField.bind(this));
     containerWorkouts.addEventListener('click', this._moveToPopup.bind(this));
@@ -114,6 +121,8 @@ class App {
 
     // handling map clicks
     this.#map.on('click', this._showForm.bind(this));
+
+    this.workouts.forEach(work => this._renderWorkoutMarker(work));
   }
 
   _showForm(mapE) {
@@ -178,7 +187,6 @@ class App {
 
     // Add new object to workouts array
     this.workouts.push(workout);
-    console.log(this.workouts);
 
     // render workout on the map
     this._renderWorkoutMarker(workout);
@@ -186,7 +194,11 @@ class App {
     // render workout on the workout list
     this._renderWorkout(workout);
 
+    // hide workout form after submition
     this._hideWorkoutForm();
+
+    // Set local workout storage
+    this._setLocalStorage();
   }
 
   _renderWorkoutMarker(workout) {
@@ -208,7 +220,6 @@ class App {
   }
 
   _renderWorkout(workout) {
-    console.log(workout);
     let html = `<li class="workout workout--${workout.type}" data-id="${
       workout.id
     }">
@@ -269,16 +280,49 @@ class App {
 
   _moveToPopup(e) {
     const workoutEl = e.target.closest('.workout');
-    console.log(workoutEl);
     if (!workoutEl) return;
     const workout = this.workouts.find(
       work => work.id === workoutEl.dataset.id
     );
-    console.log(workout);
     this.#map.setView(workout.coords, this.#mapZoomLevel, {
       animate: true,
       pan: { duration: 1 },
     });
+    workout._click();
+  }
+
+  _setLocalStorage() {
+    localStorage.setItem('workout', JSON.stringify(this.workouts));
+  }
+
+  _getLocalStorage() {
+    const dataFromLocalStorage = localStorage.getItem('workout');
+    const workoutsFromLocalStorage = JSON.parse(dataFromLocalStorage);
+    if (!dataFromLocalStorage) return;
+    // recovering the prototype chain for locally stored workouts
+    const objectsWithPortotypeChainRestored = workoutsFromLocalStorage.map(
+      workout =>
+        workout.type === 'running'
+          ? new Running(
+              workout.coords,
+              workout.distance,
+              workout.duration,
+              workout.cadence
+            )
+          : new Cycling(
+              workout.coords,
+              workout.distance,
+              workout.duration,
+              workout.elevation
+            )
+    );
+    this.workouts = objectsWithPortotypeChainRestored;
+    this.workouts.map(work => this._renderWorkout(work));
+  }
+
+  reset() {
+    localStorage.removeItem('workout');
+    location.reload();
   }
 }
 
