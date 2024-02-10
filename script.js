@@ -186,12 +186,6 @@ class App {
     this._renderWorkout(workout);
 
     this._hideWorkoutForm();
-
-    inputCadence.value =
-      inputDistance.value =
-      inputDuration.value =
-      inputElevation.value =
-        '';
   }
 
   _renderWorkoutMarker(workout) {
@@ -260,7 +254,16 @@ class App {
   }
 
   _hideWorkoutForm() {
+    inputCadence.value =
+      inputDistance.value =
+      inputDuration.value =
+      inputElevation.value =
+        '';
+    form.style.display = 'none';
     form.classList.add('hidden');
+    setTimeout(() => {
+      form.style.display = 'grid';
+    }, 1000);
   }
 }
 
