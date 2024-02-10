@@ -1,8 +1,5 @@
 'use strict';
 
-// prettier-ignore
-const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-
 class Workout {
   date = new Date();
   id = Math.trunc(Math.random() * 100000000000);
@@ -20,11 +17,20 @@ class Running extends Workout {
     super(coords, distance, duration);
     this.cadence = cadence;
     this.pace = this.calcPace();
+    this.description = this._setDescription();
   }
   calcPace() {
     // min/km
     this.pace = this.duration / this.distance;
     return this.pace;
+  }
+
+  _setDescription() {
+    // prettier-ignore
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    return `${this.type[0].toUpperCase() + this.type.slice(1)} on ${months[
+      this.date.getMonth()
+    ].slice(0, 3)} ${this.date.getDate()}`;
   }
 }
 class Cycling extends Workout {
@@ -33,11 +39,20 @@ class Cycling extends Workout {
     super(coords, distance, duration);
     this.elevation = elevation;
     this.speed = this.calcSpeed();
+    this.description = this._setDescription();
   }
   calcSpeed() {
     // km/h
     this.speed = this.distance / (this.duration / 60);
     return this.speed;
+  }
+
+  _setDescription() {
+    // prettier-ignore
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    return `${this.type[0].toUpperCase() + this.type.slice(1)} on ${months[
+      this.date.getMonth()
+    ].slice(0, 3)} ${this.date.getDate()}`;
   }
 }
 
@@ -165,11 +180,12 @@ class App {
     console.log(this.workouts);
 
     // render workout on the map
-    this.renderWorkoutMarker(workout);
+    this._renderWorkoutMarker(workout);
 
     // render workout on the workout list
+    this._renderWorkout(workout);
 
-    // add a popup on to the map
+    this._hideWorkoutForm();
 
     inputCadence.value =
       inputDistance.value =
@@ -178,7 +194,7 @@ class App {
         '';
   }
 
-  renderWorkoutMarker(workout) {
+  _renderWorkoutMarker(workout) {
     L.marker(workout.coords)
       .addTo(this.#map)
       .bindPopup(
@@ -190,8 +206,61 @@ class App {
           className: `${workout.type}-popup`,
         })
       )
-      .setPopupContent(`${workout.distance}`)
+      .setPopupContent(
+        `${workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'} ${workout.description}`
+      )
       .openPopup();
+  }
+
+  _renderWorkout(workout) {
+    console.log(workout);
+    let html = `<li class="workout workout--${workout.type}" data-id="${
+      workout.id
+    }">
+    <h2 class="workout__title">${workout.description}</h2>
+    <div class="workout__details">
+      <span class="workout__icon">${
+        workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'
+      }</span>
+      <span class="workout__value">${workout.distance}</span>
+      <span class="workout__unit">km</span>
+    </div>
+    <div class="workout__details">
+      <span class="workout__icon">⏱</span>
+      <span class="workout__value">${workout.duration}</span>
+      <span class="workout__unit">min</span>
+    </div>`;
+    if (workout.type === 'running') {
+      html += ` <div class="workout__details">
+      <span class="workout__icon">⚡️</span>
+      <span class="workout__value">${workout.pace.toFixed(1)}</span>
+      <span class="workout__unit">min/km</span>
+    </div>
+    <div class="workout__details">
+      <span class="workout__icon">🦶🏼</span>
+      <span class="workout__value">${workout.cadence}</span>
+      <span class="workout__unit">spm</span>
+    </div>
+  </li>`;
+    }
+    if (workout.type === 'cycling') {
+      html += `<div class="workout__details">
+      <span class="workout__icon">⚡️</span>
+      <span class="workout__value">${workout.speed.toFixed(1)}</span>
+      <span class="workout__unit">km/h</span>
+    </div>
+    <div class="workout__details">
+      <span class="workout__icon">⛰</span>
+      <span class="workout__value">${workout.elevation}</span>
+      <span class="workout__unit">m</span>
+    </div>
+  </li>`;
+    }
+    form.insertAdjacentHTML('afterend', html);
+  }
+
+  _hideWorkoutForm() {
+    form.classList.add('hidden');
   }
 }
 
