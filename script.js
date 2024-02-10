@@ -2,7 +2,7 @@
 
 class Workout {
   date = new Date();
-  id = Math.trunc(Math.random() * 100000000000);
+  id = Math.trunc(Math.random() * 100000000000).toString();
 
   constructor(coords, distance, duration) {
     this.coords = coords;
@@ -75,13 +75,14 @@ const inputElevation = document.querySelector('.form__input--elevation');
 class App {
   workouts = [];
   #map;
+  #mapZoomLevel = 13;
   #mapEvent;
 
   constructor() {
     this._getPosition();
     form.addEventListener('submit', this._newWorkout.bind(this));
-
     inputType.addEventListener('change', this._toggleElevationField.bind(this));
+    containerWorkouts.addEventListener('click', this._moveToPopup.bind(this));
   }
 
   _getPosition() {
@@ -103,7 +104,7 @@ class App {
 
     //map(id of the element to insert the map into)
     //setView(coordinates array and zoom)
-    this.#map = L.map('map').setView(coords, 13);
+    this.#map = L.map('map').setView(coords, this.#mapZoomLevel);
 
     // style of the map
     L.tileLayer('https://tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
@@ -264,6 +265,20 @@ class App {
     setTimeout(() => {
       form.style.display = 'grid';
     }, 1000);
+  }
+
+  _moveToPopup(e) {
+    const workoutEl = e.target.closest('.workout');
+    console.log(workoutEl);
+    if (!workoutEl) return;
+    const workout = this.workouts.find(
+      work => work.id === workoutEl.dataset.id
+    );
+    console.log(workout);
+    this.#map.setView(workout.coords, this.#mapZoomLevel, {
+      animate: true,
+      pan: { duration: 1 },
+    });
   }
 }
 
